@@ -23,6 +23,7 @@
 				<!-- /.card-header -->
 				<!-- form start -->
 				<form method="POST" action="<?php echo site_url('barang_controller/update/' . $barang['id']) ?>">
+					<input type="hidden" name="<?php echo $_token; ?>" value="<?php echo $hash; ?>" />
 					<div class="card-body">
 						<div class="row">
 							<div class="col-md-6">

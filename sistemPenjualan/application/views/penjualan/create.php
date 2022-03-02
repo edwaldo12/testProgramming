@@ -4,14 +4,9 @@
         <div class="row mb-2">
             <div class="col-sm-6">
             </div>
-            <!-- /.col -->
         </div>
-        <!-- /.row -->
     </div>
-    <!-- /.container-fluid -->
 </div>
-<!-- /.content-header -->
-<!-- Main content -->
 <section class="content">
     <div class="container-fluid">
         <div class="col-md-12">
@@ -26,8 +21,9 @@
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="nama_barang">Nama Pemesan</label>
-                                <input type="text" class="form-control" id="jabatan" placeholder="Masukkan Nama Barang" name="nama_barang" required>
+                                <input type="text" class="form-control" id="nama_pemesan" placeholder="Masukkan Nama Pemesan" name="nama_pemesan" required>
                             </div>
+                            <input type="hidden" name="<?php echo $_token; ?>" value="<?php echo $hash; ?>" />
                         </div>
                         <!-- /.card-body -->
                     </div>
@@ -49,8 +45,10 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fa-solid fa-basket-shopping"></i></span>
                                     </div>
-                                    <select name="nama_barang" id="nama_barang" class="form-control">
-                                        <option value="">Makan Bakcang</option>
+                                    <select name="nama_barang" id="barang" class="form-control">
+                                        <?php foreach ($barang as $key => $b) { ?>
+                                            <option value="<?php echo $b['id'] ?>" data-harga="<?php echo $b['harga_barang'] ?>"><?= $b['nama_barang'] ?></option>
+                                        <?php } ?>
                                     </select>
                                 </div>
                             </div>
@@ -62,7 +60,7 @@
                                     <div class="input-group-prepend">
                                         <span class="input-group-text"><i class="fa-solid fa-basket-shopping"></i></span>
                                     </div>
-                                    <input type="number" class="form-control" id="jumlah_pembelian" placeholder="Masukkan Jumlah Pembelian" name="jumlah_pembelian" required>
+                                    <input min="1" type="number" class="form-control" id="jumlah_pembelian" placeholder="Masukkan Jumlah Pembelian" name="jumlah_pembelian" required>
                                 </div>
                             </div>
                         </div>
@@ -70,7 +68,7 @@
                             <div class="form-group">
                                 <label for=""></label>
                                 <div style="margin-top:9px;">
-                                    <button type="button" class="btn btn-sm btn-success" onclick="addPenjualanOrder()">Tambah</button>
+                                    <button type="button" class="btn btn-sm btn-success" id="btnTambahPenjualanOrder">Tambah</button>
                                 </div>
                             </div>
                         </div>
@@ -96,9 +94,127 @@
                 </div>
             </div>
         </div>
-
     </div>
-
-    <!-- /.container-fluid -->
 </section>
-<!-- /.content -->
+
+<script>
+    let penjualanOrder = [];
+    let btnTambahPenjualanOrder = document.querySelector('#btnTambahPenjualanOrder');
+
+    function refreshTable() {
+        $(function() {
+            let penjualan = "";
+            for (let i = 0; i < penjualanOrder.length; i++) {
+                penjualan += "<tr>" +
+                    "<td>" + penjualanOrder[i].nama_barang + "</td>" +
+                    "<td>" + formatRupiah(String(penjualanOrder[i].harga_barang)) + "</td>" +
+                    "<td>" + penjualanOrder[i].jumlah_pesanan + "</td>" +
+                    "<td>" + formatRupiah(String(penjualanOrder[i].subtotal)) + "</td>" +
+                    "<td>" +
+                    "<button class='btn btn-xs btn-danger' onclick='removePenjualan(" + i +
+                    ")'><i class='fa fa-close'></button>" +
+                    "</td>" +
+                    "</tr>"
+            }
+            $('#detail_pembelian_body').html(penjualan)
+        });
+        calculateTotal();
+    }
+
+    btnTambahPenjualanOrder.addEventListener('click', async function() {
+        let stok = await getStok();
+        let id_barang = $("#barang option:selected").val();
+        let jumlahBarang = parseInt($("#jumlah_pembelian").val());
+
+        if (stok < jumlahBarang) {
+            alert('Stok Kurang')
+            return;
+        }
+        if ($("#jumlah_pesanan").val() < 0 || $("#jumlah_pesanan") == "") {
+            alert("Jumlah penjualan harus di isi !")
+            return;
+        }
+        let cari = penjualanOrder.find(function(order) {
+            return order.id_barang == id_barang;
+        });
+
+        if (cari != undefined) {
+            let index = penjualanOrder.indexOf(cari);
+            let harga = $("#barang option:selected").data('harga');
+            let jumlah_pesanan = $("#jumlah_pesanan").val();
+            penjualanOrder[index].jumlah_pesanan += parseInt($("#jumlah_pesanan").val());
+            penjualanOrder[index].subtotal += jumlah_pesanan * harga;
+        } else {
+            let jumlah_pesanan = parseInt($("#jumlah_pesanan").val());
+            let harga = $("#barang option:selected").data('harga');
+            let order = {
+                id_barang: id_barang,
+                nama_barang: $("#barang option:selected").text().trim(),
+                harga_barang: harga,
+                jumlah_pesanan: jumlah_pesanan,
+                subtotal: jumlah_pesanan * harga
+            };
+            penjualanOrder.push(order);
+        }
+        refreshTable();
+    });
+
+    function calculateTotal() {
+        let total = 0;
+        for (let i = 0; i < penjualanOrder.length; i++) {
+            total += penjualanOrder[i].subtotal;
+        }
+        $("#total").text("Total Pembelian : " + formatRupiah(String(total)));
+    }
+
+    function removePenjualan(index) {
+        penjualanOrder.splice(index, 1);
+        refreshTable();
+    }
+
+    function storePenjualan() {
+        if (validate())
+            return;
+
+        $(function() {
+            let token = $("input[name='_token']").val();
+            let penjualan = {
+                nama_pelanggan: $("#nama_pemesan").val()
+            }
+            $.ajax({
+                type: "POST",
+                url: "#",
+                data: {
+                    penjualan: penjualan,
+                    penjualanOrder: penjualanOrder,
+                    _token: token
+                },
+                success: function(result) {
+                    if (result.success)
+                        alert("Penjualan berhasil dilakukan.")
+                    window.location.href = "";
+                }
+            })
+        })
+    }
+
+    function hasNumbers(t) {
+        var regex = /^[0-9]+$/;
+        return regex.test(t);
+    }
+
+    async function getStok() {
+        let stok = 0;
+        let id = $("#barang").val();
+        let jumlahPembelian = parseInt($("#jumlah_pembelian").val());
+
+        await $.ajax({
+            type: "GET",
+            url: <?php echo site_url('penjualan_controller/checkStok') ?> + "/" + id,
+            success: function(barang) {
+                stok = barang.jumlah_barang
+            }
+        });
+        return stok;
+    }
+</script>

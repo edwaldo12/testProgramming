@@ -10,6 +10,10 @@ class Barang_Controller extends CI_Controller
 
     public function halamanTambah()
     {
+        $data = array(
+            '_token' => $this->security->get_csrf_token_name(),
+            'hash' => $this->security->get_csrf_hash()
+        );
         $data['_view'] = "barang/create";
         $this->load->view('layouts/index', $data);
     }
@@ -27,6 +31,10 @@ class Barang_Controller extends CI_Controller
 
     public function halamanEdit($id)
     {
+        $data = array(
+            '_token' => $this->security->get_csrf_token_name(),
+            'hash' => $this->security->get_csrf_hash()
+        );
         $data['_view'] = "barang/edit";
         $data['barang'] = $this->barang->getBarang($id);
         $this->load->view('layouts/index', $data);

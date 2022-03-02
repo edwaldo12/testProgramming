@@ -10,8 +10,21 @@ class Penjualan_Controller extends CI_Controller
 
     public function halamanTambah()
     {
+        $data = array(
+            '_token' => $this->security->get_csrf_token_name(),
+            'hash' => $this->security->get_csrf_hash()
+        );
         $data['_view'] = "penjualan/create";
+        $data['barang'] = $this->barang->getAllBarang();
         $this->load->view('layouts/index', $data);
+    }
+
+    function checkStok($id)
+    {
+        $data['barang'] = $this->barang->getBarang($id);
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode($data));
     }
 
     public function storeBarang()

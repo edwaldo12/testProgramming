@@ -38,8 +38,8 @@
                                     <tr>
                                         <td><?= $j['id'] ?></td>
                                         <td><?= $j['nama_barang'] ?></td>
-                                        <td><?= $j['harga_barang'] ?></td>
-                                        <td><?= $j['jumlah_barang'] ?></td>
+                                        <td>Rp.<?= number_format($j['harga_barang']) ?></td>
+                                        <td><?= number_format($j['jumlah_barang'],) ?></td>
                                         <td><?= $j['tanggal'] ?></td>
                                         <td>
                                             <a href="<?php echo site_url('barang_controller/halamanEdit/' . $j['id']) ?>">

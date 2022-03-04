@@ -11,14 +11,14 @@
         <div class="col-md-12">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Tambah Penjualan</h3>
+                    <h3 class="card-title">Edit Penjualan</h3>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label for="nama_barang">Nama Pemesan</label>
-                                <input type="text" class="form-control" id="nama_pemesan" placeholder="Masukkan Nama Pemesan" name="nama_pemesan" required>
+                                <input type="text" class="form-control" id="nama_pemesan" placeholder="Masukkan Nama Pemesan" name="nama_pemesan" required value="<?php echo $nama_pembeli['nama_pemesan'] ?>">
                             </div>
                         </div>
                     </div>
@@ -83,7 +83,7 @@
                                 <tbody id="detail_pembelian_body"></tbody>
                             </table>
                             <p id="total" style="padding-left:8px"></p>
-                            <button type="button" class="btn btn-sm btn-success" onclick="storePenjualan()">Simpan</button>
+                            <button type="button" class="btn btn-sm btn-success" id="addPenjualanOrder">Simpan</button>
                         </div>
                     </div>
                 </div>
@@ -93,102 +93,107 @@
 </section>
 
 <script>
-    let penjualanOrder = [];
+    $(function() {
 
-    function refreshTable() {
-        $(function() {
-            let penjualan = "";
-            for (let i = 0; i < penjualanOrder.length; i++) {
-                penjualan += "<tr>" +
-                    "<td>" + penjualanOrder[i].nama_barang + "</td>" +
-                    "<td>" + formatRupiah(String(penjualanOrder[i].harga_barang)) + "</td>" +
-                    "<td>" + penjualanOrder[i].jumlah_pesanan + "</td>" +
-                    "<td>" + formatRupiah(String(penjualanOrder[i].subtotal)) + "</td>" +
-                    "<td>" +
-                    "<button class='btn btn-xs btn-danger' onclick='removePenjualan(" + i +
-                    ")'><i class='fa fa-close'></button>" +
-                    "</td>" +
-                    "</tr>"
+        let penjualanOrder = [];
+        penjualanOrder = JSON.parse(`<?php echo $penjualan ?>`)
+        refreshTable();
+
+        function refreshTable() {
+            $(function() {
+                let penjualan = "";
+                for (let i = 0; i < penjualanOrder.length; i++) {
+                    penjualan += "<tr>" +
+                        "<td>" + penjualanOrder[i].nama_barang + "</td>" +
+                        "<td>" + formatRupiah(String(penjualanOrder[i].harga_barang)) + "</td>" +
+                        "<td>" + penjualanOrder[i].jumlah_pesanan + "</td>" +
+                        "<td>" + formatRupiah(String(penjualanOrder[i].subtotal)) + "</td>" +
+                        "<td>" +
+                        "<button class='btn btn-xs btn-danger' onclick='removePenjualan(" + i +
+                        ")'><i class='fa fa-close'></button>" +
+                        "</td>" +
+                        "</tr>"
+                }
+                $('#detail_pembelian_body').html(penjualan)
+            });
+            calculateTotal();
+        }
+
+        $("#btnTambahPenjualanOrder").on('click', async function() {
+            let stok = await getStok();
+            let id_barang = $("#barang option:selected").val();
+            let jumlahBarang = parseInt($("#jumlah_pembelian").val());
+
+            if (stok < jumlahBarang) {
+                alert('Stok Kurang')
+                return;
             }
-            $('#detail_pembelian_body').html(penjualan)
+            if (jumlahBarang < 0 || jumlahBarang == "") {
+                alert("Jumlah penjualan harus di isi !")
+                return;
+            }
+            let cari = penjualanOrder.find(function(order) {
+                return order.id_barang == id_barang;
+            });
+
+            if (cari != undefined) {
+                let index = penjualanOrder.indexOf(cari);
+                let harga = $("#barang option:selected").data('harga');
+                let jumlah_pesanan = $("#jumlah_pembelian").val();
+                penjualanOrder[index].jumlah_pesanan = parseInt(penjualanOrder[index].jumlah_pesanan) + parseInt($("#jumlah_pembelian").val());
+                penjualanOrder[index].subtotal = parseInt(penjualanOrder[index].subtotal) + (jumlah_pesanan * harga);
+            } else {
+                let jumlah_pesanan = parseInt($("#jumlah_pembelian").val());
+                let harga = $("#barang option:selected").data('harga');
+                let order = {
+                    id_barang: id_barang,
+                    nama_barang: $("#barang option:selected").text().trim(),
+                    harga_barang: harga,
+                    jumlah_pesanan: jumlah_pesanan,
+                    subtotal: jumlah_pesanan * harga
+                };
+                penjualanOrder.push(order);
+            }
+            refreshTable();
         });
-        calculateTotal();
-    }
 
-    $("#btnTambahPenjualanOrder").on('click', async function() {
-        let stok = await getStok();
-        let id_barang = $("#barang option:selected").val();
-        let jumlahBarang = parseInt($("#jumlah_pembelian").val());
+        function calculateTotal() {
+            let total = penjualanOrder.reduce((a, b) => {
+                return a + (b.harga_barang * b.jumlah_pesanan);
+            }, 0);
 
-        if (stok < jumlahBarang) {
-            alert('Stok Kurang')
-            return;
-        }
-        if (jumlahBarang < 0 || jumlahBarang == "") {
-            alert("Jumlah penjualan harus di isi !")
-            return;
-        }
-        let cari = penjualanOrder.find(function(order) {
-            return order.id_barang == id_barang;
-        });
-
-        if (cari != undefined) {
-            let index = penjualanOrder.indexOf(cari);
-            let harga = $("#barang option:selected").data('harga');
-            let jumlah_pesanan = $("#jumlah_pembelian").val();
-            penjualanOrder[index].jumlah_pesanan += parseInt($("#jumlah_pembelian").val());
-            penjualanOrder[index].subtotal += jumlah_pesanan * harga;
-        } else {
-            let jumlah_pesanan = parseInt($("#jumlah_pembelian").val());
-            let harga = $("#barang option:selected").data('harga');
-            let order = {
-                id_barang: id_barang,
-                nama_barang: $("#barang option:selected").text().trim(),
-                harga_barang: harga,
-                jumlah_pesanan: jumlah_pesanan,
-                subtotal: jumlah_pesanan * harga
-            };
-            penjualanOrder.push(order);
-        }
-        refreshTable();
-    });
-
-    function calculateTotal() {
-        let total = 0;
-        for (let i = 0; i < penjualanOrder.length; i++) {
-            total += penjualanOrder[i].subtotal;
-        }
-        $("#total").text("Total Pembelian : " + formatRupiah(String(total)));
-    }
-
-    function removePenjualan(index) {
-        penjualanOrder.splice(index, 1);
-        refreshTable();
-    }
-
-    function validate() {
-        let isValidationError = false;
-        let nama_pelanggan = $("#nama_pemesan").val();
-
-        let isNamaPelangganEmpty = nama_pelanggan == "";
-
-        if (isNamaPelangganEmpty) {
-            alert('Nama Pelanggan Kosong!');
-            isValidationError = true;
+            $("#total").text("Total Pembelian : " + formatRupiah(String(total)));
         }
 
-        if (penjualanOrder.length < 1) {
-            alert("Penjualan tidak boleh kosong.")
-            isValidationError = true;
+
+        function removePenjualan(index) {
+            penjualanOrder.splice(index, 1);
+            refreshTable();
         }
-        return isValidationError;
-    }
 
-    function storePenjualan() {
-        if (validate())
-            return;
+        function validate() {
+            let isValidationError = false;
+            let nama_pelanggan = $("#nama_pemesan").val();
 
-        $(function() {
+            let isNamaPelangganEmpty = nama_pelanggan == "";
+
+            if (isNamaPelangganEmpty) {
+                alert('Nama Pelanggan Kosong!');
+                isValidationError = true;
+            }
+
+            if (penjualanOrder.length < 1) {
+                alert("Penjualan tidak boleh kosong.")
+                isValidationError = true;
+            }
+            return isValidationError;
+        }
+
+
+        $("#addPenjualanOrder").on('click', function() {
+            if (validate())
+                return;
+
             let token_name = $("meta[name='_token_name']").attr('content');
             let token_value = $("meta[name='_token_value']").attr('content');
             let penjualan = {
@@ -203,34 +208,34 @@
 
             $.ajax({
                 type: "POST",
-                url: "<?php echo site_url('penjualan_controller/storePenjualan') ?>",
+                url: "<?php echo site_url('penjualan_controller/updatePenjualan/') . $nama_pembeli['id'] ?> ",
                 data: form_data,
                 success: function(result) {
                     if (result.success)
-                        alert("Penjualan berhasil dilakukan.")
+                        alert("Penjualan berhasil di ubah.")
                     window.location.href = "<?php echo site_url('penjualan_controller') ?>";
                 }
             })
-        })
-    }
-
-    function hasNumbers(t) {
-        var regex = /^[0-9]+$/;
-        return regex.test(t);
-    }
-
-    async function getStok() {
-        let stok = 0;
-        let id = $("#barang").val();
-        let jumlahPembelian = parseInt($("#jumlah_pembelian").val());
-
-        await $.ajax({
-            type: "GET",
-            url: "<?php echo site_url('penjualan_controller/checkStok') ?>" + "/" + id,
-            success: function(barang) {
-                stok = barang.jumlah_barang
-            }
         });
-        return stok;
-    }
+
+        function hasNumbers(t) {
+            var regex = /^[0-9]+$/;
+            return regex.test(t);
+        }
+
+        async function getStok() {
+            let stok = 0;
+            let id = $("#barang").val();
+            let jumlahPembelian = parseInt($("#jumlah_pembelian").val());
+
+            await $.ajax({
+                type: "GET",
+                url: "<?php echo site_url('penjualan_controller/checkStok') ?>" + "/" + id,
+                success: function(barang) {
+                    stok = barang.jumlah_barang
+                }
+            });
+            return stok;
+        }
+    });
 </script>

@@ -19,16 +19,22 @@
                 <div class="card">
                     <div class="card-header">
                         <h4 class="card-title">Data Penjualan</h4>
+                        </br>
+                        <form action="" method="GET">
+                            <p>Filter Data</p>
+                            <input type="date" value="<?= $this->input->get('start_date') ? date('Y-m-d', strtotime($this->input->get('start_date'))) : ""  ?>" name="start_date" class="form-control" style="min-width:100px;max-width:200px;width:100%;display:inline-block" placeholder="Dimulai dari tanggal" required>
+                            <input type="date" value="<?= $this->input->get('end_date') ? date('Y-m-d', strtotime($this->input->get('end_date'))) : ""  ?>" name="end_date" class="form-control" style="min-width:100px;max-width:200px;width:100%;display:inline-block" placeholder="Hingga Tanggal" required>
+                            <button class="btn btn-primary" style="position:relative;top:-2px"><i class="fa fa-search"></i></button>
+                        </form>
+                        <br />
                     </div>
-
                     <div class="card-body">
                         <table class="table" id="penjualan">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
                                     <th>Nama Pemesan</th>
-                                    <th>Nama Barang</th>
-                                    <th>Jumlah Pembelian</th>
+                                    <th>Total Pembelian</th>
+                                    <th>Total Barang</th>
                                     <th>Tanggal</th>
                                     <th>Aksi</th>
                                 </tr>
@@ -36,10 +42,8 @@
                             <tbody>
                                 <?php foreach ($penjualan as $key => $j) { ?>
                                     <tr>
-                                        <td><?= $j['id'] ?></td>
                                         <td><?= $j['nama_pemesan'] ?></td>
-                                        <td><?= $j['nama_barang'] ?></td>
-                                        <td><?= $j['harga_barang'] ?></td>
+                                        <td>Rp.<?= number_format($j['total_pembelian']) ?></td>
                                         <td><?= $j['jumlah_pembelian'] ?></td>
                                         <td><?= $j['tanggal'] ?></td>
                                         <td>
@@ -51,6 +55,11 @@
                                             <a href="<?php echo site_url('penjualan_controller/delete/' . $j['id']) ?>">
                                                 <button class="btn btn-danger btn-sm text-white">
                                                     <i class="fa fa-trash"></i>
+                                                </button>
+                                            </a>
+                                            <a href="<?php echo site_url('penjualan_controller/printPenjualan/' . $j['id']) ?>">
+                                                <button class="btn btn-info btn-sm text-white">
+                                                    <i class="fa-solid fa-barcode"></i></i>
                                                 </button>
                                             </a>
                                         </td>

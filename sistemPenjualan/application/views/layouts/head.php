@@ -1,5 +1,7 @@
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />\
+<meta name="_token_name" content="<?= $this->security->get_csrf_token_name() ?>">
+<meta name="_token_value" content="<?= $this->security->get_csrf_hash() ?>">
 <title>Penjualan</title>
 
 <!-- Google Font: Source Sans Pro -->

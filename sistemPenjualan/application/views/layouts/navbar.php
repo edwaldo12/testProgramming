@@ -9,7 +9,7 @@
 	<ul class="navbar-nav ml-auto">
 		<!-- Navbar Search -->
 		<li class="nav-item d-none d-sm-inline-block">
-			<a style="color:green" href="" class="nav-link"></a>
+			<a style="color:green" href="#" class="nav-link"></a>
 		</li>
 	</ul>
 </nav>

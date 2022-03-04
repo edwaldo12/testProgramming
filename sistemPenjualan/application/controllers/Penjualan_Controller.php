@@ -4,18 +4,14 @@ class Penjualan_Controller extends CI_Controller
     public function index()
     {
         $data['_view'] = "penjualan/index";
-        $data['penjualan'] = $this->penjualan->getAllPenjualan();
+        $data['penjualan'] = $this->penjualan->getAllPenjualan($this->input->get('start_date'), $this->input->get('end_date'));
         $this->load->view('layouts/index', $data);
     }
 
     public function halamanTambah()
     {
-        $data = array(
-            '_token' => $this->security->get_csrf_token_name(),
-            'hash' => $this->security->get_csrf_hash()
-        );
         $data['_view'] = "penjualan/create";
-        $data['barang'] = $this->barang->getAllBarang();
+        $data['barang'] = $this->barang->getAllBarangForPenjualan();
         $this->load->view('layouts/index', $data);
     }
 
@@ -27,38 +23,51 @@ class Penjualan_Controller extends CI_Controller
             ->set_output(json_encode($data));
     }
 
-    public function storeBarang()
+    public function storePenjualan()
     {
-        $data = [
-            'nama_barang' => $this->input->post('nama_barang'),
-            'jumlah_barang' => $this->input->post('jumlah_barang'),
-            'harga_barang' => $this->input->post('harga_barang')
-        ];
-        $this->session->set_flashdata("tambah_barang", $this->barang->addNewBarang($data));
-        redirect('barang_controller/index');
+        $penjualan_id = $this->penjualan->addPenjualanOrder($this->input->post('penjualan'));
+        $this->detail_penjualan->addDetailPenjualanOrder($this->input->post('penjualanOrder'), $penjualan_id);
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'Message' => "Berhasil Menambahkan Penjualan",
+                'Status' => TRUE
+            ]));
     }
 
     public function halamanEdit($id)
     {
-        $data['_view'] = "barang/edit";
-        $data['barang'] = $this->barang->getBarang($id);
+        $data['_view'] = "penjualan/edit";
+        $data['penjualan'] = json_encode($this->penjualan->editPenjualan($id));
+        $data['barang'] = $this->barang->getAllBarangForPenjualan();
+        $data['nama_pembeli'] = $this->penjualan->getNamaPembeli($id);
         $this->load->view('layouts/index', $data);
     }
-    public function delete($data)
+
+    public function updatePenjualan($id)
     {
-        $this->session->set_flashdata("hapus_barang", $this->barang->delete($data));
-        redirect('barang_controller/index');
+        $this->penjualan->updatePenjualan($this->input->post('penjualan'), $id);
+        $this->detail_penjualan->updateDetailPenjualanOrder($this->input->post('penjualanOrder'), $id);
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'Message' => "Berhasil Mengubah Penjualan",
+                'Status' => TRUE
+            ]));
     }
 
-    public function update($id)
+    public function delete($id)
     {
-        $data = [
-            'id' => $id,
-            'nama_barang' => $this->input->post('nama_barang'),
-            'jumlah_barang' => $this->input->post('jumlah_barang'),
-            'harga_barang' => $this->input->post('harga_barang')
-        ];
-        $this->session->set_flashdata("update_barang", $this->barang->update($data));
-        redirect('barang_controller/index');
+        $this->session->set_flashdata("hapus_penjualan", $this->penjualan->delete($id));
+        redirect('penjualan_controller/index');
+    }
+
+    public function printPenjualan($id)
+    {
+        $data['namaPembeli'] = $this->penjualan->getNamaPembeli($id);
+        $data['penjualan'] = $this->penjualan->getPenjualanPerId($id);
+        $this->load->view('penjualan/printeachone', $data);
     }
 }

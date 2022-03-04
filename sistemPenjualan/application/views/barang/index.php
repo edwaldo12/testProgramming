@@ -19,13 +19,20 @@
                 <div class="card">
                     <div class="card-header">
                         <h4 class="card-title">Data Barang</h4>
+                        </br>
+                        <form action="" method="GET">
+                            <p>Filter Data</p>
+                            <input type="date" value="<?= $this->input->get('start_date') ? date('Y-m-d', strtotime($this->input->get('start_date'))) : ""  ?>" name="start_date" class="form-control" style="min-width:100px;max-width:200px;width:100%;display:inline-block" placeholder="Dimulai dari tanggal" required>
+                            <input type="date" value="<?= $this->input->get('end_date') ? date('Y-m-d', strtotime($this->input->get('end_date'))) : ""  ?>" name="end_date" class="form-control" style="min-width:100px;max-width:200px;width:100%;display:inline-block" placeholder="Hingga Tanggal" required>
+                            <button class="btn btn-primary" style="position:relative;top:-2px"><i class="fa fa-search"></i></button>
+                        </form>
+                        <br />
                     </div>
 
                     <div class="card-body">
                         <table class="table" id="barang">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
                                     <th>Nama</th>
                                     <th>Harga Barang</th>
                                     <th>Jumlah Barang</th>
@@ -36,7 +43,6 @@
                             <tbody>
                                 <?php foreach ($barang as $key => $j) { ?>
                                     <tr>
-                                        <td><?= $j['id'] ?></td>
                                         <td><?= $j['nama_barang'] ?></td>
                                         <td>Rp.<?= number_format($j['harga_barang']) ?></td>
                                         <td><?= number_format($j['jumlah_barang'],) ?></td>
@@ -55,7 +61,6 @@
                                         </td>
                                     </tr>
                                 <?php } ?>
-
                             </tbody>
                         </table>
                     </div>
